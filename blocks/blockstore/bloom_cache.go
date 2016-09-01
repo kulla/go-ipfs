@@ -132,10 +132,11 @@ func (b *bloomcache) PutMany(bs []blocks.Block) error {
 			good = append(good, block)
 		}
 	}
-	err := b.blockstore.PutMany(bs)
+
+	err := b.blockstore.PutMany(good)
 	if err == nil {
-		for _, block := range bs {
-			b.bloom.AddTS([]byte(block.Key()))
+		for _, blk := range good {
+			b.bloom.AddTS([]byte(blk.Key()))
 		}
 	}
 	return err

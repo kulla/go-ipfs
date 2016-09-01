@@ -99,12 +99,14 @@ func (b *arccache) PutMany(bs []blocks.Block) error {
 			good = append(good, block)
 		}
 	}
-	err := b.blockstore.PutMany(bs)
+
+	err := b.blockstore.PutMany(good)
 	if err != nil {
 		return err
 	}
-	for _, block := range bs {
-		b.arc.Add(block.Key(), true)
+
+	for _, blk := range good {
+		b.arc.Add(blk.Key(), true)
 	}
 	return nil
 }

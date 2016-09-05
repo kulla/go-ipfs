@@ -1,12 +1,14 @@
 package blockstore
 
 import (
+	"sync/atomic"
+
 	"github.com/ipfs/go-ipfs/blocks"
 	key "github.com/ipfs/go-ipfs/blocks/key"
+
+	"gx/ipfs/QmVWBQQAz4Cd2XgW9KgQoqXXrU8KJoCb9WCrhWRFVBKvFe/go-metrics-interface"
 	bloom "gx/ipfs/QmWQ2SJisXwcCLsUXLwYCKSfyExXjFRW2WbBH5sqCUnwX5/bbloom"
 	context "gx/ipfs/QmZy2y8t9zQH2a1b8q2ZSLKp17ATuJoCNxxyMFG5qFExpt/go-net/context"
-
-	"sync/atomic"
 )
 
 // bloomCached returns Blockstore that caches Has requests using Bloom filter
@@ -17,6 +19,10 @@ func bloomCached(bs Blockstore, ctx context.Context, bloomSize, hashCount int) (
 		return nil, err
 	}
 	bc := &bloomcache{blockstore: bs, bloom: bl}
+	bc.hits = metrics.NewCtx(ctx, "bloom.hits_total",
+		"Number of cache hits in bloom cache").Counter()
+	bc.total = metrics.NewCtx(ctx, "bloom_total",
+		"Total number of requests to bloom cache").Counter()
 	bc.Invalidate()
 	go bc.Rebuild(ctx)
 
@@ -32,8 +38,8 @@ type bloomcache struct {
 	blockstore  Blockstore
 
 	// Statistics
-	hits   uint64
-	misses uint64
+	hits  metrics.Counter
+	total metrics.Counter
 }
 
 func (b *bloomcache) Invalidate() {
@@ -83,6 +89,7 @@ func (b *bloomcache) DeleteBlock(k key.Key) error {
 // if ok == false has is inconclusive
 // if ok == true then has respons to question: is it contained
 func (b *bloomcache) hasCached(k key.Key) (has bool, ok bool) {
+	b.total.Inc()
 	if k == "" {
 		// Return cache invalid so call to blockstore
 		// in case of invalid key is forwarded deeper
@@ -91,6 +98,7 @@ func (b *bloomcache) hasCached(k key.Key) (has bool, ok bool) {
 	if b.BloomActive() {
 		blr := b.bloom.HasTS([]byte(k))
 		if blr == false { // not contained in bloom is only conclusive answer bloom gives
+			b.hits.Inc()
 			return false, true
 		}
 	}

@@ -23,6 +23,7 @@ import (
 	goprocessctx "gx/ipfs/QmQopLATEYMNg7dVqZRNDfeE2S1yKy8zrRh5xnYiuqeZBn/goprocess/context"
 	pstore "gx/ipfs/QmSZi9ygLohBUGyHMqE5N6eToPwqcg7bZQTULeVLFu7Q6d/go-libp2p-peerstore"
 	retry "gx/ipfs/QmV71dCdjYivZwta22a7YvNmeS86r1EpnBjq9XAD21rBV9/retry-datastore"
+	metrics "gx/ipfs/QmVWBQQAz4Cd2XgW9KgQoqXXrU8KJoCb9WCrhWRFVBKvFe/go-metrics-interface"
 	ci "gx/ipfs/QmVoi5es8D5fNHZDqoW6DgDAEPEV5hQp8GBz161vZXiwpQ/go-libp2p-crypto"
 	context "gx/ipfs/QmZy2y8t9zQH2a1b8q2ZSLKp17ATuJoCNxxyMFG5qFExpt/go-net/context"
 )
@@ -109,6 +110,7 @@ func NewNode(ctx context.Context, cfg *BuildCfg) (*IpfsNode, error) {
 	if err != nil {
 		return nil, err
 	}
+	ctx = metrics.CtxScope(ctx, "ipfs")
 
 	n := &IpfsNode{
 		mode:      offlineMode,

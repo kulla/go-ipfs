@@ -1,6 +1,7 @@
 package bitswap
 
 import (
+	"math/rand"
 	"sync"
 	"time"
 
@@ -175,15 +176,11 @@ func (bs *Bitswap) rebroadcastWorker(parent context.Context) {
 			if len(entries) == 0 {
 				continue
 			}
-			tctx, cancel := context.WithTimeout(ctx, providerRequestTimeout)
-			for _, e := range bs.wm.wl.Entries() {
-				e := e
-				bs.findKeys <- &blockRequest{
-					Key: e.Key,
-					Ctx: tctx,
-				}
+			i := rand.Intn(len(entries))
+			bs.findKeys <- &blockRequest{
+				Key: entries[i].Key,
+				Ctx: ctx,
 			}
-			cancel()
 		case <-parent.Done():
 			return
 		}

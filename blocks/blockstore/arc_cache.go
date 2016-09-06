@@ -18,7 +18,7 @@ type arccache struct {
 	total metrics.Counter
 }
 
-func newARCCachedBS(bs Blockstore, ctx context.Context, lruSize int) (*arccache, error) {
+func newARCCachedBS(ctx context.Context, bs Blockstore, lruSize int) (*arccache, error) {
 	arc, err := lru.NewARC(lruSize)
 	if err != nil {
 		return nil, err
